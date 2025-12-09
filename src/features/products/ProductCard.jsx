@@ -1,12 +1,24 @@
 import { useState } from 'react';
-import { useCart } from '../cart/CartContext';  // Adjust path if needed
+import { useCart } from '../cart/CartContext';
 
 const badges = ["NEW", "Hot", "Just In"];
 
 export default function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const badge = badges[Math.floor(Math.random() * badges.length)];
-  const { addToCart, getCartCount } = useCart();
+  const { addToCart, cart } = useCart();
+
+  // ✅ Get THIS product's quantity only
+  const productQuantity = cart.items.find(item => item.id === product.id)?.quantity || 0;
+
+  const handleAddToCart = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
+    addToCart(product);
+    // Reset loading after short delay for feedback
+    setTimeout(() => setIsAdding(false), 800);
+  };
 
   return (
     <li 
@@ -27,7 +39,6 @@ export default function ProductCard({ product }) {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           loading="lazy"
         />
-        {/* Quick Actions Overlay */}
         {isHovered && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
             <div className="flex gap-2">
@@ -37,8 +48,12 @@ export default function ProductCard({ product }) {
               <button className="w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all">
                 ❤️
               </button>
-              <button className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all">
-                🛒
+              <button 
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all disabled:opacity-50"
+              >
+                {isAdding ? '➕' : '🛒'}
               </button>
             </div>
           </div>
@@ -50,22 +65,34 @@ export default function ProductCard({ product }) {
         <h3 className="font-semibold text-lg text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
           {product.title}
         </h3>
-        <p className="text-gray-600 mb-3 capitalize">{product.category}</p>
+        <p className="text-sm text-gray-600 mb-3 capitalize">{product.category}</p>
         
-        {/* Price with Countdown Style */}
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <span className="text-2xl font-bold text-green-600">${product.price}</span>
-          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium animate-pulse">
-            Limited Stock
-          </span>
+          {productQuantity > 0 && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium flex items-center gap-1">
+              {productQuantity} in cart
+            </span>
+          )}
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Main Add to Cart Button */}
         <button
-          onClick={() => addToCart(product)}
-          className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+          onClick={handleAddToCart}
+          disabled={isAdding}
+          className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Add to Cart ({getCartCount()})
+          {isAdding ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Adding...
+            </>
+          ) : (
+            <>
+              🛒 Add to Cart
+              {productQuantity > 0 && ` (+${productQuantity})`}
+            </>
+          )}
         </button>
       </div>
     </li>

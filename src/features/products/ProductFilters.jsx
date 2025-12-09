@@ -3,20 +3,30 @@ import { useState, useEffect } from 'react';
 export default function ProductFilters({ products, onFilterChange }) {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [priceRange, setPriceRange] = useState(100);
+  const [priceRange, setPriceRange] = useState(0); // updated once products load
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Compute the highest price to avoid unintentionally hiding products
+  const maxPrice = products.length
+    ? Math.ceil(Math.max(...products.map(p => p.price)))
+    : 0;
+  const sliderMax = maxPrice || 100; // sensible fallback while loading/empty
 
   // Extract unique categories
   useEffect(() => {
     const uniqueCategories = ['all', ...new Set(products.map(p => p.category))];
     setCategories(uniqueCategories);
+    // Reset price range to show all products when data updates
+    if (maxPrice) {
+      setPriceRange(maxPrice);
+    }
   }, [products]);
 
   // Filter products when filters change
   useEffect(() => {
     const filtered = products.filter(product => {
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-      const matchesPrice = product.price <= priceRange;
+      const matchesPrice = !priceRange || product.price <= priceRange;
       const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase());
       
       return matchesCategory && matchesPrice && matchesSearch;
@@ -62,19 +72,21 @@ export default function ProductFilters({ products, onFilterChange }) {
 
       {/* Price Range */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-4">💰 Price Range: ${priceRange}</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-4">
+          💰 Price Range: ${priceRange || sliderMax}
+        </label>
         <input
           type="range"
           min="0"
-          max="100"
+          max={sliderMax}
           value={priceRange}
           onChange={(e) => setPriceRange(Number(e.target.value))}
           className="w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg slider cursor-pointer accent-indigo-500"
         />
         <div className="flex justify-between text-xs text-gray-500 mt-2">
           <span>$0</span>
-          <span>${priceRange}</span>
-          <span>$100+</span>
+          <span>${priceRange || sliderMax}</span>
+          <span>${sliderMax}+</span>
         </div>
       </div>
     </div>

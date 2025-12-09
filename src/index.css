@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Cart page zoom: visually similar to ~67% browser zoom on desktop */
+.cart-page-zoom {
+  transform: scale(0.67);
+  transform-origin: top center;
+}
+
+/* Soften scaling on medium screens */
+@media (max-width: 1024px) {
+  .cart-page-zoom {
+    transform: scale(0.85);
+  }
+}
+
+/* Use native scale on small screens to avoid cramped UI */
+@media (max-width: 640px) {
+  .cart-page-zoom {
+    transform: none;
+  }
+}
